@@ -1,0 +1,66 @@
+services:
+  # Postgres Config
+  postgres:
+    container_name: hrs_postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: hrs_postgres
+      POSTGRES_PASSWORD: hrs_postgres
+    volumes:
+      - hrs_postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - hrs_network
+    restart: unless-stopped
+
+  # Kong Config
+  kong_bootstrap:
+    image: kong/kong-gateway:3.8.1.0
+    container_name: hrs_kong_bootstrap
+    depends_on:
+      - postgres
+    networks:
+      - hrs_network
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: hrs_postgres
+      KONG_PG_USER: hrs_postgres
+      KONG_PG_PASSWORD: hrs_postgres
+    command: kong migrations bootstrap
+    restart: "no"
+
+  kong_api_gateway:
+    image: kong/kong-gateway:3.8.1.0
+    container_name: hrs_kong_api_gateway
+    networks:
+      - hrs_network
+    depends_on:
+      - kong_bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: hrs_postgres
+      KONG_PG_USER: hrs_postgres
+      KONG_PG_PASSWORD: hrs_postgres
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8002:8002"
+      - "127.0.0.1:8444:8444"
+    restart: unless-stopped
+
+networks:
+  hrs_network:
+    driver: bridge
+
+volumes:
+  hrs_postgres_data:
+    driver: local

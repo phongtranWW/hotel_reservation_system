@@ -1,0 +1,21 @@
+services:
+  hotel_service:
+    image: node:21 # Node.js base image
+    container_name: hotel_service
+    working_dir: /app
+    volumes:
+      - ./dist:/app/dist # Mount thư mục dist đã build
+      - ./package.json:/app/package.json # Mount file package.json (để giữ thông tin dependencies)
+      - ./node_modules:/app/node_modules # Mount node_modules nếu đã cài đặt local
+      - ./.env:/app/.env # Mount file .env nếu cần
+    ports:
+      - '3000:3000' # Chuyển tiếp port cho ứng dụng NestJS
+    command: ['node', 'dist/main.js'] # Lệnh chạy file main.js
+    networks:
+      - hotel-reservation-system_hrs_network
+    restart: unless-stopped
+
+networks:
+  hotel-reservation-system_hrs_network:
+    driver: bridge
+    external: true

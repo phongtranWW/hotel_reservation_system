@@ -1,0 +1,21 @@
+services:
+  user_service:
+    image: node:21
+    container_name: user_service
+    working_dir: /app
+    volumes:
+      - ./dist:/app/dist
+      - ./package.json:/app/package.json
+      - ./node_modules:/app/node_modules
+      - ./.env:/app/.env
+    ports:
+      - '3002:3002'
+    command: ['node', 'dist/main.js']
+    networks:
+      - hotel-reservation-system_hrs_network
+    restart: unless-stopped
+
+networks:
+  hotel-reservation-system_hrs_network:
+    driver: bridge
+    external: true
